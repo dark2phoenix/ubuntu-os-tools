@@ -3,16 +3,13 @@
 
 galaxy_info:
   author: Christopher McCann (originally Tom Scanlan)
-  description: Install and manage Photon OS
+  description: Install and manage Ubuntu OS
   company: VMware Inc.
   license: "license ( Apache, GPLv3 )"
   min_ansible_version: 2.0
 
   platforms:
 
-  - name: Photon Linux
+  - name: Ubuntu Linux
     versions:
-    - 1.0
-    - 2.0
-    - 3.0
-    - 4.0
+    - 22.04

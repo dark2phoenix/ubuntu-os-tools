@@ -1,0 +1,27 @@
+---
+- name: Update apt repository cache
+  apt:
+    update_cache: yes
+  when: apt_updatecache | bool
+
+- name: Install standard packages
+  apt:
+    name: "{{ apt_packages }}"
+    state: present
+  when:
+    - apt_packages is defined
+    - apt_packages|length > 0
+
+- name: Add additional packages
+  apt:
+    name: "{{ apt_additional_packages }}"
+    state: present
+  when:
+    - apt_additional_packages is defined
+    - apt_additional_packages|length > 0
+
+- name: Update all installed packages to repository latest
+  apt:
+    upgrade: yes
+    update_cache: yes
+  when: apt_distrosync | bool

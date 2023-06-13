@@ -26,9 +26,9 @@
                 storage-driver: "overlay2"
                 storage-opts:
                   - "overlay2.override_kernel_check=true"
-            tdnf_updatecache: no
-            tdnf_distrosync: no
-            tdnf_additional_packages:
+            apt_updatecache: yes
+            apt_distrosync: yes
+            apt_additional_packages:
               - unzip
             ssh_enabled_users:
               - name: root
