@@ -1,6 +1,6 @@
 ---
 - name: Ensure OpenSSL is installed
-  tdnf: 
+  apt: 
     name: openssl 
     state: present
 
@@ -15,5 +15,5 @@
   register: cert_installed
 
 - name: Compile new certificate into store
-  command: rehash_ca_certificates.sh
+  shell: /usr/sbin/update-ca-certificates
   when: cert_installed.changed

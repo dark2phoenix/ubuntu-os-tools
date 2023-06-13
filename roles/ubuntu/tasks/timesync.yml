@@ -1,4 +1,9 @@
 ---
+- name: Install systemd-timesyncd
+  apt:
+    name: systemd-timesyncd
+    state: present
+
 - name: Set timezone
   timezone:
     name: "{{ ntp_timezone }}"

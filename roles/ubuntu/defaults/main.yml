@@ -34,7 +34,7 @@ apt_packages:
   - sudo
   - bind9utils
   - openssl
-  - ansible
+  - ansible-core
   - vim
   - vim-common
   - vim-scripts
