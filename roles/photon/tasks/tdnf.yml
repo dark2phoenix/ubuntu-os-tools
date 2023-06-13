@@ -1,0 +1,27 @@
+---
+- name: Update tdnf repository cache
+  tdnf:
+    update_cache: yes
+  when: tdnf_updatecache | bool
+
+- name: Install standard packages
+  tdnf:
+    name: "{{ tdnf_packages }}"
+    state: present
+  when:
+    - tdnf_packages is defined
+    - tdnf_packages|length > 0
+
+- name: Add additional packages
+  tdnf:
+    name: "{{ tdnf_additional_packages }}"
+    state: present
+  when:
+    - tdnf_additional_packages is defined
+    - tdnf_additional_packages|length > 0
+
+- name: Update all installed packages to repository latest
+  tdnf:
+    upgrade: yes
+    update_cache: yes
+  when: tdnf_distrosync | bool

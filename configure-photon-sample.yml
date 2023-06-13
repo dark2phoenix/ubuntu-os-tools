@@ -1,0 +1,60 @@
+---
+- hosts: all:localhost:photon
+  become_user: root
+
+  tasks:
+    #
+    # Ensure operation only on Photon hosts
+    #
+    - name: Perform basic Photon VM configuration
+      block:
+        - name: Configure Role 'Photon'
+          include_role:
+            name: photon
+          vars:
+            docker_photon_testing_in_docker: no
+            docker_user_id: 233
+            docker_group_id: 233
+            docker_insecure_registries: []
+            docker_daemon_config:
+              exec-opts:
+                - "native.cgroupdriver=systemd"
+              log-driver: "json-file"
+              log-opts:
+                max-size: "10m"
+                max-file: "1000"
+              storage-driver: "overlay2"
+              storage-opts:
+                - "overlay2.override_kernel_check=true"
+            tdnf_updatecache: no
+            tdnf_distrosync: no
+            tdnf_additional_packages: []
+            ssh_enabled_users:
+              - name: root
+                ssh_key: "[ssh-key data example:  ssh rsa AAaaa.....=keyname]"
+            syslog_remote_server: "172.28.7.111"
+            syslog_remote_port: 514
+            ntp_timezone: "America/New_York"
+            ntp_servers:
+              - 172.28.5.2
+              - 172.28.5.3
+              - 172.28.6.2
+              - 172.28.6.3
+            ntp_fallback_servers:
+              - 0.pool.ntp.org
+              - 1.pool.ntp.org
+              - 2.pool.ntp.org
+              - 3.pool.ntp.org
+            ssl_root_certificate_pem: |
+              -----BEGIN CERTIFICATE-----
+              intermediate certificate (if required)
+              -----END CERTIFICATE-----
+              -----BEGIN CERTIFICATE-----
+              root certificate
+              -----END CERTIFICATE-----
+
+            ssl_root_certificate_pem_filename: home_mccannical_net_root.pem    
+
+            users_root_pwd_no_expire: yes     
+
+      when: ansible_distribution == 'VMware Photon OS'

@@ -1,0 +1,11 @@
+---
+- name: Apply any user SSH keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "{{ item.ssh_key }}"
+  with_items: "{{ ssh_enabled_users }}"
+
+- name: Set root user password to never expires
+  shell: chage -M -1 root
+  when: users_root_pwd_no_expire | bool
