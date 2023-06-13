@@ -1,16 +1,16 @@
 ---
-- hosts: all:localhost:photon
+- hosts: all:localhost:ubuntu
   become_user: root
 
   tasks:
     #
-    # Ensure operation only on Photon hosts
+    # Ensure operation only on Ubuntu hosts
     #
-    - name: Perform basic Photon VM configuration
+    - name: Perform basic Ubuntu VM configuration
       block:
-        - name: Configure Role 'Photon'
+        - name: Configure Role 'Ubuntu'
           include_role:
-            name: photon
+            name: ubuntu
           vars:
             docker_photon_testing_in_docker: no
             docker_user_id: 233
@@ -26,9 +26,9 @@
               storage-driver: "overlay2"
               storage-opts:
                 - "overlay2.override_kernel_check=true"
-            tdnf_updatecache: no
-            tdnf_distrosync: no
-            tdnf_additional_packages: []
+            apt_updatecache: no
+            apt_distrosync: no
+            apt_additional_packages: []
             ssh_enabled_users:
               - name: root
                 ssh_key: "[ssh-key data example:  ssh rsa AAaaa.....=keyname]"
@@ -57,4 +57,4 @@
 
             users_root_pwd_no_expire: yes     
 
-      when: ansible_distribution == 'VMware Photon OS'
+      when: ansible_distribution == 'Ubuntu'
