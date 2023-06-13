@@ -5,19 +5,15 @@
 ---
 - name: reload unit files
   command: systemctl daemon-reload
-  when: not docker_testing_of_photon_in_docker
 
 - name: restart syslog-ng
   action: service name=syslog-ng state=restarted enabled=yes
-  when: not docker_testing_of_photon_in_docker
 
 - name: restart journald
   action: service name=systemd-journald state=restarted enabled=yes
-  when: not docker_testing_of_photon_in_docker
 
 - name: restart docker
   action: service name=docker state=restarted enabled=yes
-  when: not docker_testing_of_photon_in_docker
 
 - name: Restart systemd-timesyncd
   service:

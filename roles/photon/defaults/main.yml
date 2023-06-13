@@ -4,7 +4,6 @@
 #---------------------------
 # prevent doing things that will break under docker.
 # specifically added so that travis-ci can test inside docker
-docker_testing_of_photon_in_docker: no
 # docker group id (gets created) for socket access and similar
 docker_group_id: 995
 # Insecure registries docker is allowed to connect to
@@ -25,28 +24,30 @@ docker_daemon_config:
     max-file: "1000"
 
 #------------------
-# tdnf Settings
+# apt Settings
 #------------------
 # Create a cache of the configured sites for faster searching
-tdnf_makecache: no
+apt_makecache: no
 # Update all installed packages to the latest in the current distribution
-tdnf_distrosync: no
-tdnf_packages:
+apt_distrosync: no
+apt_packages:
   - sudo
-  - bindutils
-  - openssl-c_rehash
+  - bind9utils
+  - openssl
   - ansible
   - vim
-  - vim-extra
-  - iputils
-  - nfs-utils
+  - vim-common
+  - vim-scripts
+  - vim-syntax-docker
+  - nfs-common
   - logrotate
   - wget
   - ntp
   - tzdata
   - traceroute
   - tar
-tdnf_additional_packages: []
+  - jq
+apt_additional_packages: []
 
 #------------------
 # Syslog forwarding Settings

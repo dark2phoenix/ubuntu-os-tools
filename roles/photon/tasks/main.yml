@@ -9,7 +9,6 @@
 
 # -------- docker setup
 - include_tasks: docker.yml
-  when: not docker_testing_of_photon_in_docker
 
 # -------- log forwarding support
 - include_tasks: logstash.yml
