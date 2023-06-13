@@ -1,0 +1,20 @@
+[Unit]
+Description=Docker Daemon
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/bin/docker -d -s overlay -H unix://var/run/docker.sock -H 0.0.0.0:2375 {% for r in docker_insecure_registries %} --insecure-registry {{ r.host }}:{{ r.port }}{% endfor %}
+
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=always
+MountFlags=slave
+LimitNOFILE=1048576
+LimitNPROC=1048576
+LimitCORE=infinity
+Group=docker
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,31 @@
+#
+# Copyright 2015 VMware, Inc.  All rights reserved.
+# SPDX-License-Identifier: Apache-2.0 OR GPL-3.0-only
+#
+---
+
+# For Photon 3 and earlier, Python 2 is the default
+- name: Enable python pip on Photon 3 or lower
+  block:
+    - name: Install Python pip
+      tdnf:
+        name: python-pip
+  
+    - name: Configure pip with easy_install
+      command: easy_install pip
+      args:
+        creates: /usr/bin/pip
+  when: 
+    - ansible_lsb.major_release|int <= 3
+
+# For Photon 4, Python 3 is now the default
+- name: Assure python pip installed via tdnf
+  tdnf:
+    name: python3-pip
+  when: 
+      - ansible_lsb.major_release|int >= 4
+
+- name: Upgrade Virtualenv
+  pip: 
+    name: virtualenv 
+    state: present

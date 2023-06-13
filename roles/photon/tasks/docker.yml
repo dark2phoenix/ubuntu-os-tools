@@ -1,0 +1,72 @@
+---
+- name: Install Docker
+  tdnf:
+    name: docker
+    state: latest
+
+- name: Create docker group
+  group:
+    name: docker
+    gid: "{{ docker_group_id }}"
+    state: present
+
+- name: Create a docker user
+  user:
+    name: docker
+    uid: "{{ docker_user_id }}"
+    shell: /bin/bash
+    groups: 
+      - docker
+    append: yes
+    expires: -1
+
+- name: Set docker user password to never expire
+  shell: chage -M -1 docker
+
+- name: Add docker Group spec in Docker unit file
+  community.general.ini_file:
+    dest: /usr/lib/systemd/system/docker.service
+    section: Service
+    option: Group
+    value: docker
+    backup: yes
+  notify:
+    - reload unit files
+    - restart docker
+
+- name: Install docker-py
+  pip:
+    name: docker-py
+    state: present
+
+- include_tasks: registry.yml
+  when: docker_insecure_registries|length > 0
+
+- name: Docker configuration directory check
+  stat:
+    path: /etc/docker
+  register: docker_config_path
+
+- name: Create Docker configuration folder
+  file:
+    path: /etc/docker
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: docker_config_path.stat.exists == false
+
+- name: Configure docker daemon.json
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: 0400
+    owner: root
+    group: root
+  notify: restart docker
+
+- name: Set Docker start and run at boot
+  service:
+    name: docker
+    state: started
+    enabled: yes

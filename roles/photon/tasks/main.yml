@@ -1,0 +1,29 @@
+#
+# Copyright 2015 VMware, Inc.  All rights reserved.
+# SPDX-License-Identifier: Apache-2.0 OR GPL-3.0-only
+#
+---
+# -------- package management
+- include_tasks: tdnf.yml
+- include_tasks: pip.yml
+
+# -------- docker setup
+- include_tasks: docker.yml
+  when: not docker_testing_of_photon_in_docker
+
+# -------- log forwarding support
+- include_tasks: logstash.yml
+  when: syslog_remote_server is defined
+
+# -------- configure basic iptables rules
+- include_tasks: iptables.yml
+
+# -------- configure timesync
+- include_tasks: timesync.yml
+
+# -------- Install local ssl root certificate
+- include_tasks: certificates.yml
+  when: ssl_root_certificate_pem is defined
+
+# -------- default user operations 
+- include_tasks: users.yml

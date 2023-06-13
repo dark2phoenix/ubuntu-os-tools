@@ -1,0 +1,100 @@
+---
+- hosts: all:localhost:photon
+  become_user: root
+
+  tasks:
+    #
+    # Ensure operation only on Photon hosts
+    #
+    - name: Perform basic Photon VM configuration
+      block:
+        - name: Configure Role 'Photon'
+          include_role:
+            name: photon
+          vars:
+            docker_photon_testing_in_docker: no
+            docker_user_id: 233
+            docker_group_id: 233
+            docker_insecure_registries: []
+            docker_daemon_config:
+                exec-opts:
+                  - "native.cgroupdriver=systemd"
+                log-driver: "json-file"
+                log-opts:
+                  max-size: "10m"
+                  max-file: "1000"
+                storage-driver: "overlay2"
+                storage-opts:
+                  - "overlay2.override_kernel_check=true"
+            tdnf_updatecache: no
+            tdnf_distrosync: no
+            tdnf_additional_packages:
+              - unzip
+            ssh_enabled_users:
+              - name: root
+                ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAkG9VvHhx080huNK8+jzQKZOjV6fGaQdX1lM+qVd5jraILhAPcB8gPfiS0RAADgVSG4oHxlYu/ek2mlSaXVyWTlTpD2hOVdhtXUaTjcloBxWRRgYb+nbt78PAXwZxm0pjtnHYQAOl1YZHdpQcHlZUWvNuSD5h01m0GTFZDpiF5daSmhwaYoo3rjECDP2DfSQ+IOa7PZwVnyMmK1deBJWtdG0HwQH/vqwTe7MyYmB/E6Hal7QZ2X1DKWsNHeB3NRw88FcUZSlLsoprmRIeYu/hwMIvpzdnSxPmz/2CzUteoxZMsvEO1YZcfmpEwU9R6fkrcIqderCgcQCRM5y7l7mjfQ== cmccann-private-key"
+            syslog_remote_server: "172.28.7.111"
+            syslog_remote_port: 514
+            ntp_timezone: "America/New_York"
+            ntp_servers:
+              - 172.28.5.2
+              - 172.28.5.3
+              - 172.28.6.2
+              - 172.28.6.3
+            ntp_fallback_servers:
+              - 0.pool.ntp.org
+              - 1.pool.ntp.org
+              - 2.pool.ntp.org
+              - 3.pool.ntp.org
+            ssl_root_certificate_pem: |
+              -----BEGIN CERTIFICATE-----
+              MIIEejCCA2KgAwIBAgITEQAAAAKeo/gZwsD0awAAAAAAAjANBgkqhkiG9w0BAQsF
+              ADAlMSMwIQYDVQQDExpNY0Nhbm5pY2FsIE9mZmxpbmUgUm9vdCBDQTAeFw0xODEy
+              MzEwMjExMTVaFw0yMzEyMzEwMjIxMTVaMGcxEzARBgoJkiaJk/IsZAEZFgNuZXQx
+              GjAYBgoJkiaJk/IsZAEZFgptY2Nhbm5pY2FsMRQwEgYKCZImiZPyLGQBGRYEaG9t
+              ZTEeMBwGA1UEAxMVTWNDYW5uaWNhbCBJc3N1aW5nIENBMIIBIjANBgkqhkiG9w0B
+              AQEFAAOCAQ8AMIIBCgKCAQEA3aNLOwtJbiHxAoyvghrGwrzNIJUBzKORVPs8ZC2U
+              +nd/PbC0nwINt3ys3PlP59OvnD5fJPmwQFy/OnCszglezfM2wGvYGhOMd53DtbTE
+              lSEX/F+mxTDOrgAoXUbxrRUJhDvaiBRCMZDDEK0LGTkGwT/YPvOOgphqc/yEJIT/
+              JLIYWdoWVSoYFuLbO54IcjoSAcUNQDV1xPGTAAt5mP6m92mSS7qlXm9uwJhYCZFX
+              AmrBareRNI6E+tfy9lnsTmRi7gT82cxppoXolV0SzCckjxJJZzXa0b03HopDyfpq
+              kMxCRj3aZnJM7ZiWj77/KBDQaQx21ad882oP0t3jeedGnQIDAQABo4IBXzCCAVsw
+              EAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFCFd7seugULtmOnH1SzrmpaAULdP
+              MBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMB
+              Af8EBTADAQH/MB8GA1UdIwQYMBaAFEN3DrVu/6i32TL4orzTyxKNwSR0MF8GA1Ud
+              HwRYMFYwVKBSoFCGTmh0dHA6Ly9jcmwuaG9tZS5tY2Nhbm5pY2FsLm5ldC9DZXJ0
+              RW5yb2xsL01jQ2FubmljYWwlMjBPZmZsaW5lJTIwUm9vdCUyMENBLmNybDBtBggr
+              BgEFBQcBAQRhMF8wXQYIKwYBBQUHMAKGUWh0dHA6Ly9jcmwuaG9tZS5tY2Nhbm5p
+              Y2FsLm5ldC9DZXJ0RW5yb2xsL2NhX01jQ2FubmljYWwlMjBPZmZsaW5lJTIwUm9v
+              dCUyMENBLmNydDANBgkqhkiG9w0BAQsFAAOCAQEASFTMDr20Ja2pqrbm1mU0PQBm
+              gpHJNVPEZADH5YXAgiXbh/B5XWv5d9Jv1qJjypcfT7D96kqs0YjX0kB8eXLofP+O
+              4h/i+A5BaDN0Xo02L3+kH//yrTzRxtuTNRysl0lHz0Lo/EnUqrINHe1QV0pFqXAf
+              nYpViO7+wEOhPWfUMH0qeBZVr4lhhpQmPPiPY5NnvtA8v71MAM+J7CDcZ3uoKWDM
+              +DcU4aDTlYdDvMCriwOuCsPWp/Jag9mA5aR2iCU32/u3y+QXhx07MzotrUhBHiHg
+              vahAIXBSjKn300P9TGLTcaL3DAi9/W0PX5v810wZ5HT+dgp2/0ZrB0QwOOZnsw==
+              -----END CERTIFICATE-----
+              -----BEGIN CERTIFICATE-----
+              MIIDJTCCAg2gAwIBAgIQQdnZ6Pz1R4RK2OD5yCA56jANBgkqhkiG9w0BAQsFADAl
+              MSMwIQYDVQQDExpNY0Nhbm5pY2FsIE9mZmxpbmUgUm9vdCBDQTAeFw0xODEyMzEw
+              MTU2MDRaFw0yODEyMzEwMjA2MDJaMCUxIzAhBgNVBAMTGk1jQ2FubmljYWwgT2Zm
+              bGluZSBSb290IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk0k6
+              +4Y0zZQXBXi+MNk2mUrKkOsDRD2cTSvSErBsg7euZhp8eR6kirvHDtNgjSpAs34V
+              H80zmhV1cWPI5T04RxY0kFpzNPaJG4j4yFs6e5qk9xQPiOGbHRNlH266m9KiXcXa
+              h0LDs7c3tyX0OByvNR3auFE9glvVVHFilTqwnwKZhI4nai5ygJr9O4y/fVia2D4b
+              6ePo23M3tf6Cs+JIAACHVYwftabMaWoCohJMleFX8gV7TG5qOaae7Xi/YDPwapiB
+              FT2OlA6pVsr9bNvr9A7ibGTZvTc5AEtK1Yq7UV44PVnVZWp8/JpBkhnlxkOkrE6Q
+              bXFjkacPoJrLRQ+QewIDAQABo1EwTzALBgNVHQ8EBAMCAYYwDwYDVR0TAQH/BAUw
+              AwEB/zAdBgNVHQ4EFgQUQ3cOtW7/qLfZMviivNPLEo3BJHQwEAYJKwYBBAGCNxUB
+              BAMCAQAwDQYJKoZIhvcNAQELBQADggEBADhQNygzVzjSCo2++WEq+C+ToJda4OX6
+              3WqHs1RzgyfnZIzyGZys0Ety++Lc0raHQWnbS1ATAsYheGt8oLqsARR17fFTtvwK
+              2hwc6ySP8x4YQAQ1rI2/DmkBNM84qcwHNc5wzvuP8uNGMSUxf28G3UnAeoKmGpOk
+              RfaFrAzN0rrWtqrtiioP61dVad8WZjyD24+c+j9WsHDbSi1oDrFvdygtc4zXHDGQ
+              zgQvaY/56aV5N9oqfZn+BtLTgtdLvc+MW5nFnKw+Z0GkcdxpwDjmBc9Am+ByH7WJ
+              MSBqSZxT+sbkgiblYflECY6edv9iU5hEHkmmZSkzKQ/Bxnik5igoOZA=
+              -----END CERTIFICATE-----
+
+            ssl_root_certificate_pem_filename: home_mccannical_net_root.pem    
+
+            users_root_pwd_no_expire: yes     
+
+      when: ansible_distribution == 'VMware Photon OS'

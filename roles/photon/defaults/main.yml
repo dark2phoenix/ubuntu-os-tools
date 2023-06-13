@@ -1,0 +1,94 @@
+---
+#---------------------------
+# Docker Settings
+#---------------------------
+# prevent doing things that will break under docker.
+# specifically added so that travis-ci can test inside docker
+docker_testing_of_photon_in_docker: no
+# docker group id (gets created) for socket access and similar
+docker_group_id: 995
+# Insecure registries docker is allowed to connect to
+# Format:
+#   docker_insecure_registries:
+#     - host: host1
+#       port: port1
+#     - host: host2
+#       port: port2
+docker_insecure_registries: []
+
+# Docker Daemon Config
+# This converts directly to JSON
+docker_daemon_config:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "1000"
+
+#------------------
+# tdnf Settings
+#------------------
+# Create a cache of the configured sites for faster searching
+tdnf_makecache: no
+# Update all installed packages to the latest in the current distribution
+tdnf_distrosync: no
+tdnf_packages:
+  - sudo
+  - bindutils
+  - openssl-c_rehash
+  - ansible
+  - vim
+  - vim-extra
+  - iputils
+  - nfs-utils
+  - logrotate
+  - wget
+  - ntp
+  - tzdata
+  - traceroute
+  - tar
+tdnf_additional_packages: []
+
+#------------------
+# Syslog forwarding Settings
+#------------------
+# Server/IP to forward syslog to
+syslog_remote_server:
+# Port to forward syslog to
+syslog_remote_port: 514
+# File to log locally to.  If unset, won't log to a file
+syslog_local_file: /var/log/messages
+
+#------------------
+# timesync/timezone Settings
+#------------------
+# Timezone to set OS to (use TZdata values)
+ntp_timezone: "Etc/UTC"
+# List of time servers to synch with
+ntp_servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org
+# List to sync with if above list cannot be reached
+ntp_fallback_servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org
+
+#------------------
+# SSL Certificate settings
+#------------------
+# Inline certificate (Include Begin and End Certificate lines)
+# -----BEGIN CERTIFICATE-----
+# ...
+# -----END CERTIFICATE-----
+#
+ssl_root_certificate_pem:
+# Name of the certifcate to be stored in /etc/ssl/certs
+ssl_root_certificate_pem_filename:
+
+#------------------
+# User settings
+#------------------
+users_root_pwd_no_expire: no
