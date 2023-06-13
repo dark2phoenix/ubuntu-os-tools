@@ -1,6 +1,45 @@
 ---
-- name: Install Docker
-  tdnf:
+- name: Remove conflicting Docker packages (if present)
+  apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - podman-docker
+      - containerd
+      - runc
+    state: absent
+
+- name: Install Docker prerequisites
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - python3-pip
+      - virtualenv
+      - python3-setuptools
+    state: latest
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu jammy stable
+    state: present
+
+- name: Update apt and install docker-ce
+  apt:
+    name: docker-ce
+    state: latest
+    update_cache: true
+
+- name: Install Docker Module for Python
+  pip:
     name: docker
     state: latest
 
@@ -60,7 +99,7 @@
   template:
     src: daemon.json.j2
     dest: /etc/docker/daemon.json
-    mode: 0400
+    mode: 0644
     owner: root
     group: root
   notify: restart docker

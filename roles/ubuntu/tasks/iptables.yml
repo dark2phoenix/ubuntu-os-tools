@@ -4,7 +4,7 @@
 
 ---
 - name: Install the `iptables` package
-  tdnf:
+  apt:
     name: iptables
     state: latest
 
@@ -55,6 +55,6 @@
     state: present
 
 - name: save iptables
-  shell: "iptables-save > /etc/systemd/scripts/ip4save"
+  shell: "iptables-save > /etc/iptables.rules"
   become: true
   changed_when: false

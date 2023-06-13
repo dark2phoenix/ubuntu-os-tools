@@ -7,7 +7,7 @@
 # Ensure installed
 #
 - name: Ensure syslog-ng installed on host
-  tdnf:
+  apt:
     name: syslog-ng
     state: present
 
