@@ -1,0 +1,29 @@
+#
+# Copyright 2015 VMware, Inc.  All rights reserved.
+# SPDX-License-Identifier: Apache-2.0 OR GPL-3.0-only
+#
+---
+#
+# Ensure installed
+#
+- name: Ensure syslog-ng installed on host
+  tdnf:
+    name: syslog-ng
+    state: present
+
+- name: configure syslog-ng.conf
+  template:
+    src: syslog-ng.conf.j2
+    dest: /etc/syslog-ng/syslog-ng.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart syslog-ng
+
+- name: tell systemd to forward journal to syslog
+  lineinfile:
+    dest: /etc/systemd/journald.conf
+    regexp: "^ForwardToSyslog=.*"
+    line: "ForwardToSyslog=yes"
+    state: present
+  notify: restart journald
