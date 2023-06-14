@@ -1,7 +1,8 @@
 ---
 - hosts: all:localhost:ubuntu
   become_user: root
-
+  environment:
+    DEBIAN_FRONTEND:  noninteractive
   tasks:
     #
     # Ensure operation only on Ubuntu hosts
