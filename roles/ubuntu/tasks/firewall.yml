@@ -5,13 +5,33 @@
 #
 # The ufw command is used directly because the ufw Ansible module lives in
 # the community.general collection, and this role uses ansible.builtin only.
-# Existing ufw rules on the host are left in place; this only adds.
+# Existing ufw rules on the host are left in place; this only adds, unless
+# force_reset_firewall is true, which rebuilds ufw from firewall_allowed_ports.
 #
 ---
 - name: Install ufw
   ansible.builtin.apt:
     name: ufw
     state: present
+
+# A reset rebuilds ufw from firewall_allowed_ports alone, so a list without
+# SSH would cut off remote access once ufw is enabled again.
+- name: Refuse to reset the firewall without SSH
+  ansible.builtin.assert:
+    that:
+      - firewall_allowed_ports | map('string') | select('match', '^(22(/tcp)?|ssh|OpenSSH)$') | list | length > 0
+    fail_msg: >-
+      force_reset_firewall is set but firewall_allowed_ports has no 22/tcp, so
+      the rebuilt firewall would block SSH. Add 22/tcp to firewall_allowed_ports.
+    quiet: true
+  when: force_reset_firewall | bool
+
+# Deletes every ufw rule (ufw keeps timestamped backups of its rule files) and
+# disables ufw; the tasks below add firewall_allowed_ports and enable it again.
+- name: Reset ufw (force_reset_firewall)
+  ansible.builtin.command: ufw --force reset
+  changed_when: true
+  when: force_reset_firewall | bool
 
 - name: Allow inbound ports through ufw
   ansible.builtin.command: ufw allow {{ item | quote }}
