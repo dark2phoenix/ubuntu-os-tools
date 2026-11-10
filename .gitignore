@@ -1,2 +1,6 @@
 # Ignore an actual configuration file
 configure-ubuntu.yml
+
+# Python bytecode
+__pycache__/
+*.pyc

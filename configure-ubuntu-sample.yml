@@ -1,22 +1,25 @@
 ---
-- hosts: all:localhost:ubuntu
+- name: Configure Ubuntu hosts
+  hosts: all:localhost:ubuntu
+  become: true
   become_user: root
   environment:
-    DEBIAN_FRONTEND:  noninteractive
+    DEBIAN_FRONTEND: noninteractive
   tasks:
     #
     # Ensure operation only on Ubuntu hosts
     #
     - name: Perform basic Ubuntu VM configuration
+      when: ansible_facts['distribution'] == 'Ubuntu'
       block:
         - name: Configure Role 'Ubuntu'
-          include_role:
+          ansible.builtin.include_role:
             name: ubuntu
           vars:
-            docker_photon_testing_in_docker: no
             docker_user_id: 233
             docker_group_id: 233
             docker_insecure_registries: []
+            docker_replace_docker_ce: false
             docker_daemon_config:
               exec-opts:
                 - "native.cgroupdriver=systemd"
@@ -25,10 +28,13 @@
                 max-size: "10m"
                 max-file: "1000"
               storage-driver: "overlay2"
-              storage-opts:
-            apt_updatecache: no
-            apt_distrosync: no
+            apt_updatecache: true
+            apt_distrosync: false
             apt_additional_packages: []
+            firewall_allowed_ports:
+              - 22/tcp
+              - 80/tcp
+              - 443/tcp
             ssh_enabled_users:
               - name: root
                 ssh_key: "[ssh-key data example:  ssh rsa AAaaa.....=keyname]"
@@ -53,8 +59,6 @@
               root certificate
               -----END CERTIFICATE-----
 
-            ssl_root_certificate_pem_filename: home_mccannical_net_root.pem    
+            ssl_root_certificate_pem_filename: home_mccannical_net_root.pem
 
-            users_root_pwd_no_expire: yes     
-
-      when: ansible_distribution == 'Ubuntu'
+            users_root_pwd_no_expire: true

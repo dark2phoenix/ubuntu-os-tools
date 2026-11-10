@@ -1,1 +1,9 @@
-{{ docker_daemon_config | to_nice_json }}
+{% set config = docker_daemon_config | default({}) %}
+{% if docker_insecure_registries | default([]) | length > 0 %}
+{%   set registries = [] %}
+{%   for r in docker_insecure_registries %}
+{%     set _ = registries.append((r.host ~ ':' ~ r.port) if r is mapping else r) %}
+{%   endfor %}
+{%   set config = config | combine({'insecure-registries': registries}) %}
+{% endif %}
+{{ config | to_nice_json }}

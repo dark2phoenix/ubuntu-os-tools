@@ -1,19 +1,20 @@
 ---
-- name: Ensure OpenSSL is installed
-  apt: 
-    name: openssl 
+- name: Ensure OpenSSL and ca-certificates are installed
+  ansible.builtin.apt:
+    name:
+      - openssl
+      - ca-certificates
     state: present
 
-- name: Copy root certificate to store
-  copy:
+# update-ca-certificates only reads *.crt files under
+# /usr/local/share/ca-certificates. A file dropped straight into
+# /etc/ssl/certs (as this role used to) never reaches the system bundle.
+- name: Copy root certificate to the local CA store
+  ansible.builtin.copy:
     content: "{{ ssl_root_certificate_pem }}"
-    dest: /etc/ssl/certs/{{ ssl_root_certificate_pem_filename }} 
+    dest: "/usr/local/share/ca-certificates/{{ ssl_root_certificate_pem_filename | regex_replace('[.](pem|crt)$', '') }}.crt"
     owner: root
     group: root
     mode: "0644"
-    backup: yes
-  register: cert_installed
-
-- name: Compile new certificate into store
-  shell: /usr/sbin/update-ca-certificates
-  when: cert_installed.changed
+    backup: true
+  notify: Update CA certificates

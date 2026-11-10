@@ -4,25 +4,33 @@
 #
 ---
 # -------- package management
-- include_tasks: apt.yml
-- include_tasks: pip.yml
+- name: Manage apt packages
+  ansible.builtin.include_tasks: apt.yml
+- name: Install Python tooling
+  ansible.builtin.include_tasks: pip.yml
 
 # -------- docker setup
-- include_tasks: docker.yml
+- name: Install and configure Docker
+  ansible.builtin.include_tasks: docker.yml
 
 # -------- log forwarding support
-- include_tasks: logstash.yml
-  when: syslog_remote_server is defined
+- name: Forward syslog to the remote server
+  ansible.builtin.include_tasks: logstash.yml
+  when: syslog_remote_server | default('', true) | length > 0
 
-# -------- configure basic iptables rules
-- include_tasks: iptables.yml
+# -------- firewall (ufw)
+- name: Configure the ufw firewall
+  ansible.builtin.include_tasks: firewall.yml
 
 # -------- configure timesync
-- include_tasks: timesync.yml
+- name: Configure time sync
+  ansible.builtin.include_tasks: timesync.yml
 
 # -------- Install local ssl root certificate
-- include_tasks: certificates.yml
-  when: ssl_root_certificate_pem is defined
+- name: Install the local root certificate
+  ansible.builtin.include_tasks: certificates.yml
+  when: ssl_root_certificate_pem | default('', true) | length > 0
 
-# -------- default user operations 
-- include_tasks: users.yml
+# -------- default user operations
+- name: Configure users
+  ansible.builtin.include_tasks: users.yml

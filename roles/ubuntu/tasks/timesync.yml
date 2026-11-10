@@ -1,25 +1,33 @@
 ---
 - name: Install systemd-timesyncd
-  apt:
+  ansible.builtin.apt:
     name: systemd-timesyncd
     state: present
 
+# Native replacement for community.general.timezone
+- name: Read current timezone
+  ansible.builtin.command: timedatectl show --property=Timezone --value
+  register: timesync_current_tz
+  changed_when: false
+  check_mode: false
+
 - name: Set timezone
-  timezone:
-    name: "{{ ntp_timezone }}"
+  ansible.builtin.command: timedatectl set-timezone {{ ntp_timezone | quote }}
+  changed_when: true
+  when: timesync_current_tz.stdout | trim != ntp_timezone
   notify: systemd-timesyncd configuration changed
 
 - name: Configure systemd-timesyncd
-  template:
+  ansible.builtin.template:
     src: timesyncd.conf.j2
     dest: /etc/systemd/timesyncd.conf
-    mode: 0644
+    mode: "0644"
     owner: root
     group: root
   notify: systemd-timesyncd configuration changed
 
 - name: Start and enable systemd-timesyncd
-  service:
+  ansible.builtin.systemd_service:
     name: systemd-timesyncd.service
-    enabled: yes
+    enabled: true
     state: started
