@@ -1,0 +1,19 @@
+# NOTE: this file managed by ansible (ubuntu-os-tools). All changes will be overwritten.
+#
+# Loaded by the packaged /etc/syslog-ng/syslog-ng.conf through its
+# @include "/etc/syslog-ng/conf.d/*.conf" line. s_src is that file's source:
+# the systemd journal (system()) plus syslog-ng's own messages.
+
+destination d_remote {
+	syslog("{{ syslog_remote_server }}" transport("{{ syslog_remote_transport }}") port({{ syslog_remote_port }})
+{% if syslog_disk_buffer_bytes | int > 0 %}
+		# Holds messages through a remote outage instead of dropping them.
+		disk-buffer(reliable(no) disk-buf-size({{ syslog_disk_buffer_bytes | int }}))
+{% endif %}
+	);
+};
+
+log {
+	source(s_src);
+	destination(d_remote);
+};

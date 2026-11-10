@@ -52,12 +52,22 @@ apt_additional_packages: []
 #------------------
 # Syslog forwarding Settings
 #------------------
-# Server/IP to forward syslog to
+# Server to forward syslog to. Prefer a DNS name over an IP, so moving the
+# syslog server doesn't silently break forwarding.
 syslog_remote_server:
 # Port to forward syslog to
 syslog_remote_port: 514
-# File to log locally to.  If unset, won't log to a file
-syslog_local_file: /var/log/messages
+# Transport for the remote destination: tcp or udp
+syslog_remote_transport: tcp
+# Disk buffer for the remote destination, in bytes (0 = memory queue only, so
+# messages are dropped while the server is down)
+syslog_disk_buffer_bytes: 268435456
+# Name of the drop-in written to /etc/syslog-ng/conf.d/
+syslog_remote_dropin: 90-remote.conf
+# After configuring, send a logger line and fail unless the remote
+# destination's written counter rises within syslog_verify_timeout seconds
+syslog_verify_delivery: true
+syslog_verify_timeout: 15
 
 #------------------
 # timesync/timezone Settings

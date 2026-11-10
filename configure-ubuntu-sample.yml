@@ -32,7 +32,7 @@
             ssh_enabled_users:
               - name: root
                 ssh_key: "[ssh-key data example:  ssh rsa AAaaa.....=keyname]"
-            syslog_remote_server: "172.28.7.111"
+            syslog_remote_server: "lab01-flt-logs01.lab.mccannical.net"
             syslog_remote_port: 514
             ntp_timezone: "America/New_York"
             ntp_servers:
