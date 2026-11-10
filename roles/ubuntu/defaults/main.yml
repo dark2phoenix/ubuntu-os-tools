@@ -58,6 +58,7 @@ apt_packages:
   - traceroute
   - tar
   - jq
+  - less
 apt_additional_packages: []
 
 # ------------------
