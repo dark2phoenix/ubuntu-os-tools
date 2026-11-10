@@ -85,6 +85,7 @@ Default packages:
 - `traceroute`
 - `tar`
 - `jq`
+- `less`
 
 **Example:** apt
 
