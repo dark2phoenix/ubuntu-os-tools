@@ -38,8 +38,11 @@
         state: absent
 
     - name: Reinstall syslog-ng-core to restore its packaged syslog-ng.conf
-      ansible.builtin.command: apt-get install --reinstall -y -o Dpkg::Options::=--force-confmiss syslog-ng-core
-      notify: restart syslog-ng
+      # The apt module has no way to pass --force-confmiss, which is what
+      # makes dpkg put a deleted conffile back.
+      ansible.builtin.command: apt-get install --reinstall -y -o Dpkg::Options::=--force-confmiss syslog-ng-core  # noqa: command-instead-of-module
+      changed_when: true
+      notify: Restart syslog-ng
 
 # syslog-ng reads the journal itself, so this role no longer sets
 # ForwardToSyslog=yes in journald.conf. An existing setting is left as it is.
@@ -51,7 +54,7 @@
     group: root
     mode: "0644"
     backup: true
-  notify: restart syslog-ng
+  notify: Restart syslog-ng
 
 # A drop-in can't be checked on its own (it uses the main file's s_src), so
 # check the whole configuration. A failure here stops the play before the
@@ -67,6 +70,7 @@
 # actually leaves.
 - name: Verify a test message reaches the remote syslog server
   ansible.builtin.shell: |
+    set -o pipefail
     written() {
       syslog-ng-ctl stats | awk -F';' '$1 == "dst.syslog" && $2 == "d_remote#0" && $5 == "written" { print $6; exit }'
     }

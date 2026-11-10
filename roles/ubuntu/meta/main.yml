@@ -6,10 +6,9 @@ galaxy_info:
   description: Install and manage Ubuntu OS
   company: VMware Inc.
   license: "license ( Apache, GPLv3 )"
-  min_ansible_version: 2.0
+  min_ansible_version: "2.16"
 
   platforms:
-
-  - name: Ubuntu Linux
-    versions:
-    - 22.04
+    - name: Ubuntu
+      versions:
+        - noble

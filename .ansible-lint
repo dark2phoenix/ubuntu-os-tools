@@ -1,0 +1,6 @@
+---
+# The role's variables (docker_*, apt_*, syslog_*, ntp_*, ...) predate the
+# role-prefix convention and are set by existing playbooks; renaming them all
+# to ubuntu_* would break those playbooks for no functional gain.
+skip_list:
+  - var-naming[no-role-prefix]

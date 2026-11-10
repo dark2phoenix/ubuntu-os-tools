@@ -1,111 +1,124 @@
 ---
-- name: Remove conflicting Docker packages (if present)
-  apt:
+# Docker from the Ubuntu archive (docker.io, docker-compose-v2), updated by
+# ordinary apt like every other package, the way the Photon role uses Photon's
+# own docker package. Earlier versions of this role installed Docker Inc.'s
+# docker-ce from a repository hard-coded to jammy (22.04), which froze on any
+# host upgraded to a later release.
+
+- name: Check for Docker Inc.'s docker-ce
+  ansible.builtin.command: dpkg-query -W -f=${Status} docker-ce
+  register: docker_ce_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Removing docker-ce stops the engine and every container on the host.
+# Images, containers and volumes in /var/lib/docker are kept (remove, not
+# purge), and docker.io uses the same directory.
+- name: Stop before replacing docker-ce unless that was asked for
+  ansible.builtin.fail:
+    msg: >-
+      docker-ce is installed. Replacing it with Ubuntu's docker.io stops every
+      container on this host. Stop the workloads, then re-run with
+      docker_replace_docker_ce=true.
+  when:
+    - "'install ok installed' in docker_ce_status.stdout"
+    - not (docker_replace_docker_ce | bool)
+
+- name: Remove Docker Inc.'s packages
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - docker-ce-rootless-extras
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: absent
+  when: "'install ok installed' in docker_ce_status.stdout"
+
+- name: Remove Docker Inc.'s apt sources and signing key
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/docker.list
+    - /etc/apt/sources.list.d/docker.list.distUpgrade
+    - /etc/apt/sources.list.d/docker.sources
+    - /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+    - /etc/apt/keyrings/docker.asc
+    - /etc/apt/keyrings/docker.gpg
+
+- name: Install Docker from the Ubuntu archive
+  ansible.builtin.apt:
     name:
       - docker.io
-      - docker-doc
-      - docker-compose
-      - podman-docker
-      - containerd
-      - runc
-    state: absent
-
-- name: Install Docker prerequisites
-  apt:
-    name:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - software-properties-common
-      - python3-pip
-      - virtualenv
-      - python3-setuptools
-    state: latest
-
-- name: Add Docker GPG apt Key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+      - docker-compose-v2
+      - docker-buildx
     state: present
-
-- name: Add Docker Repository
-  apt_repository:
-    repo: deb https://download.docker.com/linux/ubuntu jammy stable
-    state: present
-
-- name: Update apt and install docker-ce
-  apt:
-    name: docker-ce
-    state: latest
     update_cache: true
 
-- name: Install Docker Module for Python
-  pip:
-    name: docker
-    state: latest
-
 - name: Create docker group
-  group:
+  ansible.builtin.group:
     name: docker
     gid: "{{ docker_group_id }}"
     state: present
 
 - name: Create a docker user
-  user:
+  ansible.builtin.user:
     name: docker
     uid: "{{ docker_user_id }}"
     shell: /bin/bash
-    groups: 
+    groups:
       - docker
-    append: yes
+    append: true
     expires: -1
+    password_expire_max: -1
 
-- name: Set docker user password to never expire
-  shell: chage -M -1 docker
+# Use a systemd drop-in rather than editing the packaged unit in
+# /usr/lib/systemd/system, which is overwritten on every docker package update.
+- name: Create docker.service drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
 
-- name: Add docker Group spec in Docker unit file
-  community.general.ini_file:
-    dest: /usr/lib/systemd/system/docker.service
-    section: Service
-    option: Group
-    value: docker
-    backup: yes
+- name: Run the docker service with the docker group
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker.service.d/group.conf
+    content: |
+      # Managed by Ansible (ubuntu role)
+      [Service]
+      Group=docker
+    owner: root
+    group: root
+    mode: "0644"
   notify:
-    - reload unit files
-    - restart docker
-
-- name: Install docker-py
-  pip:
-    name: docker-py
-    state: present
-
-- include_tasks: registry.yml
-  when: docker_insecure_registries|length > 0
-
-- name: Docker configuration directory check
-  stat:
-    path: /etc/docker
-  register: docker_config_path
+    - Reload unit files
+    - Restart docker
 
 - name: Create Docker configuration folder
-  file:
+  ansible.builtin.file:
     path: /etc/docker
     state: directory
-    mode: 0755
-    group: root
+    mode: "0755"
     owner: root
-  when: docker_config_path.stat.exists == false
+    group: root
 
+# Insecure registries are set through daemon.json (see daemon.json.j2)
 - name: Configure docker daemon.json
-  template:
+  ansible.builtin.template:
     src: daemon.json.j2
     dest: /etc/docker/daemon.json
-    mode: 0644
+    mode: "0644"
     owner: root
     group: root
-  notify: restart docker
+  notify: Restart docker
 
 - name: Set Docker start and run at boot
-  service:
+  ansible.builtin.systemd_service:
     name: docker
     state: started
-    enabled: yes
+    enabled: true

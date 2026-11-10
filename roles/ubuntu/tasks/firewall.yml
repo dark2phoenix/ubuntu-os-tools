@@ -1,0 +1,38 @@
+#
+# Firewall through ufw, Ubuntu's own front end. Rules persist in ufw's own
+# configuration, and ufw's defaults already allow loopback, established
+# connections and ping.
+#
+# The ufw command is used directly because the ufw Ansible module lives in
+# the community.general collection, and this role uses ansible.builtin only.
+# Existing ufw rules on the host are left in place; this only adds.
+#
+---
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Allow inbound ports through ufw
+  ansible.builtin.command: ufw allow {{ item | quote }}
+  register: firewall_ufw_allow
+  changed_when: "'Skipping' not in firewall_ufw_allow.stdout"
+  loop: "{{ firewall_allowed_ports }}"
+
+- name: Read ufw state
+  ansible.builtin.command: ufw status
+  register: firewall_ufw_status
+  changed_when: false
+  check_mode: false
+
+# Only after the allow rules, so enabling can't cut off SSH.
+- name: Enable ufw
+  ansible.builtin.command: ufw --force enable
+  changed_when: true
+  when: "'Status: active' not in firewall_ufw_status.stdout"
+
+# Earlier versions saved raw iptables rules here; nothing ever restored them.
+- name: Remove the old saved iptables rules
+  ansible.builtin.file:
+    path: /etc/iptables.rules
+    state: absent

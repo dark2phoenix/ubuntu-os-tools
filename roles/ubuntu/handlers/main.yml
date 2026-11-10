@@ -3,25 +3,40 @@
 # SPDX-License-Identifier: Apache-2.0 OR GPL-3.0-only
 #
 ---
-- name: reload unit files
-  command: systemctl daemon-reload
+- name: Reload unit files
+  ansible.builtin.systemd_service:
+    daemon_reload: true
 
-- name: restart syslog-ng
-  action: service name=syslog-ng state=restarted enabled=yes
+- name: Restart syslog-ng
+  ansible.builtin.systemd_service:
+    name: syslog-ng
+    state: restarted
+    enabled: true
 
-- name: restart journald
-  action: service name=systemd-journald state=restarted enabled=yes
+- name: Restart journald
+  ansible.builtin.systemd_service:
+    name: systemd-journald
+    state: restarted
+    enabled: true
 
-- name: restart docker
-  action: service name=docker state=restarted enabled=yes
+- name: Restart docker
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+    enabled: true
 
 - name: Restart systemd-timesyncd
-  service:
+  ansible.builtin.systemd_service:
     name: systemd-timesyncd.service
     state: restarted
   listen: systemd-timesyncd configuration changed
 
 - name: Write adjtime
-  command: hwclock --systohc
-  when: ansible_virtualization_role == "host" or ansible_virtualization_role == "NA"
+  ansible.builtin.command: hwclock --systohc
+  changed_when: true
+  when: ansible_facts['virtualization_role'] == "host" or ansible_facts['virtualization_role'] == "NA"
   listen: systemd-timesyncd configuration changed
+
+- name: Update CA certificates
+  ansible.builtin.command: /usr/sbin/update-ca-certificates
+  changed_when: true
