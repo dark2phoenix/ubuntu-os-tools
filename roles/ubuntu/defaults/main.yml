@@ -22,11 +22,18 @@ docker_insecure_registries: []
 
 # Docker Daemon Config
 # This converts directly to JSON
+# Written to /etc/docker/daemon.json only when that file doesn't exist yet,
+# unless force_reset_docker_config is true.
 docker_daemon_config:
+  exec-opts:
+    - "native.cgroupdriver=systemd"
   log-driver: "json-file"
   log-opts:
     max-size: "10m"
-    max-file: "1000"
+    max-file: "3"
+  storage-driver: "overlay2"
+# Replace an existing /etc/docker/daemon.json with docker_daemon_config
+force_reset_docker_config: false
 
 # ------------------
 # apt Settings
@@ -61,6 +68,9 @@ firewall_allowed_ports:
   - 22/tcp
   - 80/tcp
   - 443/tcp
+# Reset ufw (deleting every existing rule) and rebuild it from
+# firewall_allowed_ports. Normally ufw is only added to.
+force_reset_firewall: false
 
 # ------------------
 # Syslog forwarding Settings

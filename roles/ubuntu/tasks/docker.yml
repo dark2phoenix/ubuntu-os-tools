@@ -107,7 +107,14 @@
     owner: root
     group: root
 
-# Insecure registries are set through daemon.json (see daemon.json.j2)
+- name: Check for an existing daemon.json
+  ansible.builtin.stat:
+    path: /etc/docker/daemon.json
+  register: docker_daemon_json
+
+# Seeded once: an existing daemon.json (hand-edited, or maintained by another
+# tool) is left alone unless force_reset_docker_config is true. Insecure
+# registries are set through daemon.json (see daemon.json.j2).
 - name: Configure docker daemon.json
   ansible.builtin.template:
     src: daemon.json.j2
@@ -115,7 +122,19 @@
     mode: "0644"
     owner: root
     group: root
+    force: "{{ force_reset_docker_config | bool }}"
+    backup: true
   notify: Restart docker
+
+- name: Report that daemon.json was left unchanged
+  ansible.builtin.debug:
+    msg: >-
+      /etc/docker/daemon.json already exists and was left unchanged.
+      To replace it with this playbook's docker_daemon_config,
+      set force_reset_docker_config: true.
+  when:
+    - docker_daemon_json.stat.exists
+    - not (force_reset_docker_config | bool)
 
 - name: Set Docker start and run at boot
   ansible.builtin.systemd_service:
