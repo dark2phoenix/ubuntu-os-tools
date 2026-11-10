@@ -18,7 +18,7 @@
 - name: Stop before replacing docker-ce unless that was asked for
   ansible.builtin.fail:
     msg: >-
-      docker-ce is installed. Replacing it with Ubuntu's docker.io stops every
+      docker-ce is installed. Replacing it with the Ubuntu docker.io package stops every
       container on this host. Stop the workloads, then re-run with
       docker_replace_docker_ce=true.
   when:
@@ -130,7 +130,7 @@
   ansible.builtin.debug:
     msg: >-
       /etc/docker/daemon.json already exists and was left unchanged.
-      To replace it with this playbook's docker_daemon_config,
+      To replace it with docker_daemon_config from this playbook,
       set force_reset_docker_config: true.
   when:
     - docker_daemon_json.stat.exists
