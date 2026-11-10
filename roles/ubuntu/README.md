@@ -16,16 +16,15 @@ The docker group id to set (gets created if missing) for socket access and simil
 
 Array of URLs to setup to allow the use of Docker insecure registries.
 
-    remote_syslog_server: "{{ logstash_server }}"
-    remote_syslog_port: "{{ logstash_port }}"
+    syslog_remote_server: lab01-flt-logs01.lab.mccannical.net
+    syslog_remote_port: 514
+    syslog_remote_transport: tcp
+    syslog_disk_buffer_bytes: 268435456
+    syslog_remote_dropin: 90-remote.conf
+    syslog_verify_delivery: true
+    syslog_verify_timeout: 15
 
-Set these two items to log to setup for logging to a remote syslog server.
-Note that this assumes the use of logstash named variables, so if using
-a role that includes those by default, you'd need not set them in your play.
-
-    local_syslog_file: /var/log/messages
-
-Set path to log locally, if unset, the resulting setup won't log to a file
+Setting `syslog_remote_server` turns on forwarding. Use a DNS name, not an IP, so moving the server doesn't silently break forwarding. The role keeps Ubuntu's packaged `/etc/syslog-ng/syslog-ng.conf`, which already reads the journal and writes the usual `/var/log` files, and adds only `/etc/syslog-ng/conf.d/<syslog_remote_dropin>` with the remote destination. Where the packaged file was changed (this role replaced it until 2026-11-09), it restores it with `apt-get install --reinstall` and keeps the old copy as `syslog-ng.conf.replaced-<time>`. The disk buffer keeps messages through a server restart; `0` means memory queue only. After restarting syslog-ng the role sends a `logger` test line and fails unless the remote destination's `written` counter rises within `syslog_verify_timeout` seconds, because a running service proves nothing.
 
     photon_yum_repo: https://dl.bintray.com/vmware/photon_release_1.0_TP2_x86_64
     photon_yum_repo_enabled: yes|no

@@ -7,23 +7,86 @@
 # Ensure installed
 #
 - name: Ensure syslog-ng installed on host
-  apt:
+  ansible.builtin.apt:
     name: syslog-ng
     state: present
 
-- name: configure syslog-ng.conf
-  template:
-    src: syslog-ng.conf.j2
-    dest: /etc/syslog-ng/syslog-ng.conf
+# Ubuntu's packaged syslog-ng.conf already reads the journal and writes the
+# usual /var/log files (syslog, auth.log, kern.log ...). This role adds only a
+# conf.d drop-in for the remote destination. Until 2026-11-09 it replaced the
+# whole file with a template whose journal socket isn't reliably present, so
+# put the packaged file back wherever it was changed, keeping the old copy.
+- name: Check whether the packaged syslog-ng.conf has been changed
+  ansible.builtin.command: dpkg --verify syslog-ng-core
+  register: syslog_ng_dpkg_verify
+  changed_when: false
+  failed_when: false
+
+- name: Restore the packaged syslog-ng.conf
+  when: "'/etc/syslog-ng/syslog-ng.conf' in syslog_ng_dpkg_verify.stdout"
+  block:
+    - name: Keep the changed syslog-ng.conf
+      ansible.builtin.copy:
+        src: /etc/syslog-ng/syslog-ng.conf
+        dest: "/etc/syslog-ng/syslog-ng.conf.replaced-{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
+        remote_src: true
+        mode: preserve
+
+    - name: Remove the changed syslog-ng.conf
+      ansible.builtin.file:
+        path: /etc/syslog-ng/syslog-ng.conf
+        state: absent
+
+    - name: Reinstall syslog-ng-core to restore its packaged syslog-ng.conf
+      ansible.builtin.command: apt-get install --reinstall -y -o Dpkg::Options::=--force-confmiss syslog-ng-core
+      notify: restart syslog-ng
+
+# syslog-ng reads the journal itself, so this role no longer sets
+# ForwardToSyslog=yes in journald.conf. An existing setting is left as it is.
+- name: Configure the remote syslog destination
+  ansible.builtin.template:
+    src: syslog-ng-remote.conf.j2
+    dest: "/etc/syslog-ng/conf.d/{{ syslog_remote_dropin }}"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
+    backup: true
   notify: restart syslog-ng
 
-- name: tell systemd to forward journal to syslog
-  lineinfile:
-    dest: /etc/systemd/journald.conf
-    regexp: "^ForwardToSyslog=.*"
-    line: "ForwardToSyslog=yes"
-    state: present
-  notify: restart journald
+# A drop-in can't be checked on its own (it uses the main file's s_src), so
+# check the whole configuration. A failure here stops the play before the
+# restart handler runs, leaving the running syslog-ng on its old config.
+- name: Check the full syslog-ng configuration
+  ansible.builtin.command: syslog-ng --syntax-only
+  changed_when: false
+
+- name: Start syslog-ng with the new config before checking delivery
+  ansible.builtin.meta: flush_handlers
+
+# syslog-ng stays "active" while forwarding nothing, so prove a message
+# actually leaves.
+- name: Verify a test message reaches the remote syslog server
+  ansible.builtin.shell: |
+    written() {
+      syslog-ng-ctl stats | awk -F';' '$1 == "dst.syslog" && $2 == "d_remote#0" && $5 == "written" { print $6; exit }'
+    }
+    before=$(written)
+    if [ -z "$before" ]; then
+      echo "d_remote is missing from syslog-ng-ctl stats"
+      exit 1
+    fi
+    logger -t ansible-syslog-check "delivery check from $(hostname)"
+    for _ in $(seq 1 {{ syslog_verify_timeout }}); do
+      sleep 1
+      after=$(written)
+      if [ "${after:-0}" -gt "$before" ]; then
+        echo "written ${before} -> ${after}"
+        exit 0
+      fi
+    done
+    echo "nothing written to {{ syslog_remote_server }}:{{ syslog_remote_port }} in {{ syslog_verify_timeout }}s (written ${before}); check DNS and the port"
+    exit 1
+  args:
+    executable: /bin/bash
+  changed_when: false
+  when: syslog_verify_delivery | bool
