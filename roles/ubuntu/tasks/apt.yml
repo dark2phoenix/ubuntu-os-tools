@@ -2,6 +2,8 @@
 - name: Update apt repository cache
   ansible.builtin.apt:
     update_cache: true
+  # A metadata refresh is not a change to the host, so a re-run reports changed=0.
+  changed_when: false
   when: apt_updatecache | bool
 
 - name: Install standard packages
